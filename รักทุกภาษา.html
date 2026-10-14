@@ -1,0 +1,346 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>รักทุกภาษา</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&display=swap">
+<style>
+/* Layout: one centered column. Title and controls frame a square-ish stage where words circle a heart, then fly off as a butterfly. */
+:root {
+  --bg: #f8f3f1;
+  --fg: #2a1b22;
+  --muted: #6e5d66;
+  --stage: #fffaf8;
+  --line: #e8dad7;
+  --accent: #c2315a;
+  --on-accent: #ffffff;
+  --word-s: 68%;
+  --word-l: 42%;
+  --font-ui: "Prompt", "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #130e18;
+    --fg: #f4e9ee;
+    --muted: #ab9ca8;
+    --stage: #1b1423;
+    --line: #2f2439;
+    --accent: #ff7ea5;
+    --on-accent: #26101a;
+    --word-s: 82%;
+    --word-l: 70%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #130e18;
+  --fg: #f4e9ee;
+  --muted: #ab9ca8;
+  --stage: #1b1423;
+  --line: #2f2439;
+  --accent: #ff7ea5;
+  --on-accent: #26101a;
+  --word-s: 82%;
+  --word-l: 70%;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.6;
+  padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header h1 { margin: 0; font-size: clamp(30px, 7vw, 44px); font-weight: 600; line-height: 1.2; text-wrap: balance; }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 52ch; text-wrap: pretty; }
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 0.95;
+  background: radial-gradient(ellipse at 50% 45%, var(--stage), color-mix(in srgb, var(--stage) 80%, var(--bg)));
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+}
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--stage); }
+.seg button {
+  font: inherit; font-size: 15px; color: var(--muted); background: transparent; border: 0;
+  padding: 6px 16px; border-radius: 999px; cursor: pointer;
+}
+.seg button:hover { color: var(--fg); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 500; }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cap { margin: 0; min-height: 1.6em; color: var(--muted); font-size: 15px; min-width: 0; }
+.cap b { color: var(--fg); font-weight: 500; }
+
+details { border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: 14px; }
+summary { cursor: pointer; width: fit-content; }
+details ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+details li b { color: var(--fg); font-weight: 500; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>รักทุกภาษา</h1>
+    <p id="sub">คำว่า “รัก” จากหลายภาษาวนเป็นรูปหัวใจ แล้วค่อยๆ บานเป็นดอกไม้</p>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="cv" role="img" aria-label="คำว่ารักหลายภาษาวนเป็นรูปหัวใจ แล้วเปลี่ยนเป็นรูปดอกไม้"></canvas>
+  </div>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="เลือกรูปร่าง">
+      <button type="button" id="m-auto" aria-pressed="true">สลับอัตโนมัติ</button>
+      <button type="button" id="m-heart" aria-pressed="false">หัวใจ</button>
+      <button type="button" id="m-fly" aria-pressed="false">ดอกไม้</button>
+    </div>
+    <p class="cap" id="cap" aria-live="polite">แตะหรือเลื่อนเมาส์ไปที่คำ เพื่อดูว่าเป็นภาษาอะไร</p>
+  </div>
+
+  <details>
+    <summary>รายชื่อภาษาทั้งหมด</summary>
+    <ul id="list"></ul>
+  </details>
+</div>
+
+<script>
+(function () {
+  var WORDS = [
+    ["รัก","ไทย"],["Love","อังกฤษ"],["愛","ญี่ปุ่น"],["사랑","เกาหลี"],["爱","จีน"],
+    ["Amour","ฝรั่งเศส"],["Amor","สเปน"],["Amore","อิตาลี"],["Liebe","เยอรมัน"],["Любовь","รัสเซีย"],
+    ["حب","อาหรับ"],["प्यार","ฮินดี"],["Αγάπη","กรีก"],["Aşk","ตุรกี"],["Amor","โปรตุเกส"],
+    ["Liefde","ดัตช์"],["Kärlek","สวีเดน"],["Miłość","โปแลนด์"],["אהבה","ฮีบรู"],["Yêu","เวียดนาม"],
+    ["Cinta","อินโดนีเซีย"],["Pag-ibig","ฟิลิปปินส์"],["Upendo","สวาฮีลี"],["Aloha","ฮาวาย"],["Rakkaus","ฟินแลนด์"],
+    ["Szerelem","ฮังการี"],["Láska","เช็ก"],["Любов","ยูเครน"],["عشق","เปอร์เซีย"],["ভালোবাসা","เบงกาลี"],
+    ["காதல்","ทมิฬ"],["Grá","ไอริช"],["Cariad","เวลส์"],["Amo","เอสเปรันโต"],["ຮັກ","ลาว"],
+    ["ស្រឡាញ់","เขมร"],["ချစ်","พม่า"],["माया","เนปาล"],["محبت","อูรดู"],["Kærlighed","เดนมาร์ก"],
+    ["Kjærlighet","นอร์เวย์"],["Dragoste","โรมาเนีย"],["სიყვარული","จอร์เจีย"],["Սեր","อาร์เมเนีย"],["Aroha","เมารี"],
+    ["Ást","ไอซ์แลนด์"],["Uthando","ซูลู"],["Хайр","มองโกเลีย"],["ፍቅር","อัมฮารา"],["Maitasun","บาสก์"],
+    ["Ljubav","โครเอเชีย"],["Meilė","ลิทัวเนีย"],["Mīlestība","ลัตเวีย"],["Armastus","เอสโตเนีย"],["Dashuri","แอลเบเนีย"],
+    ["ప్రేమ","เตลูกู"],["ಪ್ರೀತಿ","กันนาดา"],["പ്രണയം","มลายาลัม"],["ਪਿਆਰ","ปัญจาบี"],["પ્રેમ","คุชราต"],
+    ["ආදරය","สิงหล"]
+  ];
+  var N = WORDS.length;
+  var TAU = Math.PI * 2;
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  document.getElementById("sub").textContent =
+    "คำว่า “รัก” จาก " + N + " ภาษา วนเป็นรูปหัวใจ แล้วค่อยๆ บานเป็นดอกไม้";
+  var list = document.getElementById("list");
+  WORDS.forEach(function (w) {
+    var li = document.createElement("li");
+    var b = document.createElement("b"); b.textContent = w[0];
+    li.appendChild(b); li.appendChild(document.createTextNode(" " + w[1]));
+    list.appendChild(li);
+  });
+
+  /* ---------- curves, resampled by arc length ---------- */
+  function heartFn(u) {
+    var t = u * TAU;
+    return [
+      16 * Math.pow(Math.sin(t), 3),
+      13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)
+    ];
+  }
+  function flowerFn(u) {
+    var th = u * TAU;
+    var r = 0.3 + 0.7 * Math.pow(Math.abs(Math.cos(3 * th)), 0.85);
+    return [Math.cos(th) * r, Math.sin(th) * r];
+  }
+  function buildPath(fn, n) {
+    var raw = [], i;
+    for (i = 0; i <= n; i++) raw.push(fn(i / n));
+    var minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
+    raw.forEach(function (p) {
+      if (p[0] < minx) minx = p[0]; if (p[0] > maxx) maxx = p[0];
+      if (p[1] < miny) miny = p[1]; if (p[1] > maxy) maxy = p[1];
+    });
+    var cx = (minx + maxx) / 2, cy = (miny + maxy) / 2, size = Math.max(maxx - minx, maxy - miny);
+    var pts = raw.map(function (p) { return [(p[0] - cx) / size, (p[1] - cy) / size]; });
+    var cum = [0];
+    for (i = 1; i <= n; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    var total = cum[n];
+    return {
+      total: total,
+      at: function (u) {
+        u = ((u % 1) + 1) % 1;
+        var target = u * total, lo = 0, hi = n;
+        while (hi - lo > 1) { var mid = (lo + hi) >> 1; if (cum[mid] <= target) lo = mid; else hi = mid; }
+        var seg = cum[hi] - cum[lo] || 1, f = (target - cum[lo]) / seg;
+        return [pts[lo][0] + (pts[hi][0] - pts[lo][0]) * f, pts[lo][1] + (pts[hi][1] - pts[lo][1]) * f];
+      }
+    };
+  }
+  var heart = buildPath(heartFn, 2400);
+  var bfly = buildPath(flowerFn, 3600);
+
+  /* ---------- canvas setup ---------- */
+  var stage = document.getElementById("stage");
+  var cv = document.getElementById("cv");
+  var ctx = cv.getContext("2d");
+  var W = 0, H = 0, S = 0, font = 14, items = [];
+  var RING_SCALES = [1, 0.76, 0.54, 0.33];
+  var FONT_FAMILY = '"Prompt", "Noto Sans Thai", "Noto Sans", system-ui, sans-serif';
+
+  function layout() {
+    var r = stage.getBoundingClientRect();
+    W = r.width; H = r.height;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    S = W * 0.8;
+    font = Math.max(11, Math.min(17, S * 0.026));
+    var spacing = font * 2.9;
+    items = [];
+    RING_SCALES.forEach(function (sc, k) {
+      var c = Math.max(6, Math.round(heart.total * S * sc / spacing));
+      for (var j = 0; j < c; j++) items.push({ k: k, j: j, c: c, sc: sc, dir: k % 2 ? -1 : 1 });
+    });
+    items.forEach(function (it, i) {
+      var w = WORDS[(i * 17) % N];
+      it.i = i; it.word = w[0]; it.lang = w[1];
+      var h = Math.sin((i + 1) * 12.9898) * 43758.5453;
+      it.h = h - Math.floor(h);
+      it.x = 0; it.y = 0;
+    });
+  }
+
+  /* ---------- state ---------- */
+  var mode = "auto";
+  var m = 0;          // 0 = heart, 1 = flower
+  var autoT = 0;
+  var time = 0, last = 0, frameNo = 0;
+  var tokS = "68%", tokL = "42%";
+  var hover = -1;
+  var CYCLE = 14.5;
+
+  function smooth(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
+  function autoM(t) {
+    t = t % CYCLE;
+    if (t < 4) return 0;
+    if (t < 6.5) return smooth((t - 4) / 2.5);
+    if (t < 12) return 1;
+    return 1 - smooth((t - 12) / 2.5);
+  }
+  function readTokens() {
+    var cs = getComputedStyle(document.documentElement);
+    tokS = cs.getPropertyValue("--word-s").trim() || tokS;
+    tokL = cs.getPropertyValue("--word-l").trim() || tokL;
+  }
+
+  function frame(now) {
+    var dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016;
+    last = now;
+    var speedK = reduce ? 0.45 : 1;
+    time += dt * speedK;
+    if (frameNo++ % 30 === 0) readTokens();
+
+    if (mode === "auto") { autoT += dt * speedK; m = autoM(autoT); }
+    else { var target = mode === "fly" ? 1 : 0; m += (target - m) * (1 - Math.exp(-dt * 2.2)); }
+    var e = smooth(m);
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    var beat = 1 + (reduce ? 0.015 : 0.035) * Math.pow(Math.max(0, Math.sin(time * 5.2)), 3) * (1 - e);
+    var bloom = 1 + (reduce ? 0.02 : 0.05) * Math.sin(time * 1.8);
+    var spin = time * (reduce ? 0.12 : 0.3);
+    var cs = Math.cos(spin), sn = Math.sin(spin);
+    var vh = 26, vb = 48;
+    var cx = W / 2, cy = H / 2 + H * 0.015;
+    var M = items.length;
+    var swirl = Math.sin(Math.PI * e) * 0.06 * S;
+
+    for (var i = 0; i < M; i++) {
+      var it = items[i];
+      var hu = it.j / it.c + it.dir * time * vh / (heart.total * S * it.sc);
+      var hp = heart.at(hu);
+      var hx = hp[0] * it.sc * beat, hy = hp[1] * it.sc * beat;
+      var bu = i / M + time * vb / (bfly.total * S);
+      var bp = bfly.at(bu);
+      var fx = bp[0] * bloom, fy = bp[1] * bloom;
+      var bx = fx * cs - fy * sn, by = fx * sn + fy * cs;
+
+      var x = (hx + (bx - hx) * e) * S + swirl * Math.sin(i * 1.7 + time * 2);
+      var y = (hy + (by - hy) * e) * S + swirl * Math.cos(i * 2.3 + time * 2);
+      var px = cx + x, py = cy - y;
+      it.x = px; it.y = py;
+
+      var hueHeart = 340 + it.k * 14 + it.h * 22;
+      var hueFly = 300 + ((bu % 1 + 1) % 1) * 110;
+      var hue = (hueHeart + (hueFly - hueHeart) * e + 360) % 360;
+      var size = font * (1.08 - it.k * 0.06) * (0.9 + it.h * 0.25);
+      var alpha = 0.6 + it.h * 0.4;
+      var weight = 500;
+      if (i === hover) { size *= 1.5; alpha = 1; weight = 600; }
+
+      ctx.font = weight + " " + size.toFixed(1) + "px " + FONT_FAMILY;
+      ctx.fillStyle = "hsla(" + hue.toFixed(0) + "," + tokS + "," + tokL + "," + alpha.toFixed(2) + ")";
+      ctx.fillText(it.word, px, py);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- interaction ---------- */
+  var cap = document.getElementById("cap");
+  var DEFAULT_CAP = cap.textContent;
+  function pick(ev) {
+    var r = cv.getBoundingClientRect();
+    var x = ev.clientX - r.left, y = ev.clientY - r.top;
+    var best = -1, bd = 30 * 30;
+    for (var i = 0; i < items.length; i++) {
+      var dx = items[i].x - x, dy = items[i].y - y, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = i; }
+    }
+    hover = best;
+    if (best >= 0) {
+      cap.textContent = "";
+      var b = document.createElement("b"); b.textContent = items[best].word;
+      cap.appendChild(b);
+      cap.appendChild(document.createTextNode(" · ภาษา" + items[best].lang));
+    } else {
+      cap.textContent = DEFAULT_CAP;
+    }
+  }
+  cv.addEventListener("pointermove", pick);
+  cv.addEventListener("pointerdown", pick);
+  cv.addEventListener("pointerleave", function (ev) {
+    if (ev.pointerType === "mouse") { hover = -1; cap.textContent = DEFAULT_CAP; }
+  });
+
+  var btns = { auto: document.getElementById("m-auto"), heart: document.getElementById("m-heart"), fly: document.getElementById("m-fly") };
+  function setMode(next) {
+    if (next === "auto") autoT = m < 0.5 ? 0 : 6.5;
+    mode = next;
+    Object.keys(btns).forEach(function (k) { btns[k].setAttribute("aria-pressed", k === next ? "true" : "false"); });
+  }
+  Object.keys(btns).forEach(function (k) { btns[k].addEventListener("click", function () { setMode(k); }); });
+
+  /* ---------- start ---------- */
+  if (window.ResizeObserver) new ResizeObserver(layout).observe(stage);
+  else window.addEventListener("resize", layout);
+  try {
+    new MutationObserver(readTokens).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readTokens);
+  } catch (err) {}
+
+  layout(); readTokens();
+  var started = false;
+  function start() { if (started) return; started = true; requestAnimationFrame(frame); }
+  if (document.fonts && document.fonts.load) {
+    Promise.race([document.fonts.load('500 16px "Prompt"'), new Promise(function (r) { setTimeout(r, 1500); })]).then(start, start);
+  } else start();
+})();
+</script>
+
+</body></html>
